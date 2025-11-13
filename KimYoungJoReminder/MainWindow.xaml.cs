@@ -117,13 +117,33 @@ namespace KimYoungJoReminder
         }
 
         /// <summary>
-        /// 재생 헤드 위치 업데이트
+        /// 재생 헤드 위치 업데이트 (부드러운 애니메이션)
         /// </summary>
-        private void UpdatePlayheadPosition(int timeInSeconds)
+        private void UpdatePlayheadPosition(int timeInSeconds, bool animate = true)
         {
-            double x = timeInSeconds * PIXELS_PER_SECOND;
-            _playheadLine.X1 = x;
-            _playheadLine.X2 = x;
+            double targetX = timeInSeconds * PIXELS_PER_SECOND;
+
+            if (animate && _timelineManager.State == TimelineState.Playing)
+            {
+                // 1초 동안 부드럽게 이동하는 애니메이션
+                var animation = new System.Windows.Media.Animation.DoubleAnimation
+                {
+                    To = targetX,
+                    Duration = TimeSpan.FromSeconds(1)
+                };
+
+                // X1, X2 모두 애니메이션 적용
+                _playheadLine.BeginAnimation(Line.X1Property, animation);
+                _playheadLine.BeginAnimation(Line.X2Property, animation);
+            }
+            else
+            {
+                // 애니메이션 없이 즉시 이동 (Reset, Pause 시)
+                _playheadLine.BeginAnimation(Line.X1Property, null);
+                _playheadLine.BeginAnimation(Line.X2Property, null);
+                _playheadLine.X1 = targetX;
+                _playheadLine.X2 = targetX;
+            }
         }
 
         /// <summary>
