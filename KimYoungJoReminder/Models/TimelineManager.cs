@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Windows.Threading;
 
@@ -31,9 +32,19 @@ namespace KimYoungJoReminder.Models
         private List<ReminderItem> _reminders;
 
         /// <summary>
-        /// 1초마다 실행되는 타이머
+        /// UI 업데이트용 타이머 (0.1초마다 실행)
         /// </summary>
         private DispatcherTimer _timer;
+
+        /// <summary>
+        /// 실제 경과 시간 측정용 Stopwatch
+        /// </summary>
+        private Stopwatch _stopwatch;
+
+        /// <summary>
+        /// Pause 시점까지의 누적 시간 (초)
+        /// </summary>
+        private int _pausedTimeInSeconds;
 
         /// <summary>
         /// 시간이 업데이트될 때 발생하는 이벤트 (UI 업데이트용)
@@ -55,25 +66,36 @@ namespace KimYoungJoReminder.Models
             _reminders = new List<ReminderItem>();
             CurrentTimeInSeconds = 0;
             State = TimelineState.Stopped;
+            _pausedTimeInSeconds = 0;
 
-            // 1초마다 실행되는 타이머 설정
+            // UI 업데이트용 타이머 (0.1초마다 실행하여 부드러운 업데이트)
             _timer = new DispatcherTimer();
-            _timer.Interval = TimeSpan.FromSeconds(1);
+            _timer.Interval = TimeSpan.FromMilliseconds(100);
             _timer.Tick += Timer_Tick;
+
+            // Stopwatch 초기화
+            _stopwatch = new Stopwatch();
         }
 
         /// <summary>
-        /// 타이머 틱 이벤트 (1초마다 실행)
+        /// 타이머 틱 이벤트 (0.1초마다 실행)
         /// </summary>
         private void Timer_Tick(object sender, EventArgs e)
         {
-            CurrentTimeInSeconds++;
+            // Stopwatch로부터 실제 경과 시간 계산 (초 단위)
+            int newTimeInSeconds = _pausedTimeInSeconds + (int)_stopwatch.Elapsed.TotalSeconds;
 
-            // 시간 업데이트 이벤트 발생
-            TimeUpdated?.Invoke(this, CurrentTimeInSeconds);
+            // 시간이 변경되었을 때만 처리
+            if (newTimeInSeconds != CurrentTimeInSeconds)
+            {
+                CurrentTimeInSeconds = newTimeInSeconds;
 
-            // 해당 시간의 리마인더 체크
-            CheckAndTriggerReminders();
+                // 시간 업데이트 이벤트 발생
+                TimeUpdated?.Invoke(this, CurrentTimeInSeconds);
+
+                // 해당 시간의 리마인더 체크
+                CheckAndTriggerReminders();
+            }
 
             // 최대 시간 도달 체크
             if (CurrentTimeInSeconds >= MAX_TIMELINE_SECONDS)
@@ -106,6 +128,8 @@ namespace KimYoungJoReminder.Models
             if (State == TimelineState.Completed)
                 return;
 
+            // Stopwatch 시작 또는 재개
+            _stopwatch.Start();
             _timer.Start();
             ChangeState(TimelineState.Playing);
         }
@@ -118,6 +142,10 @@ namespace KimYoungJoReminder.Models
             if (State != TimelineState.Playing)
                 return;
 
+            // Stopwatch 정지 및 누적 시간 저장
+            _stopwatch.Stop();
+            _pausedTimeInSeconds = CurrentTimeInSeconds;
+
             _timer.Stop();
             ChangeState(TimelineState.Paused);
         }
@@ -127,6 +155,7 @@ namespace KimYoungJoReminder.Models
         /// </summary>
         public void Stop()
         {
+            _stopwatch.Stop();
             _timer.Stop();
         }
 
@@ -136,6 +165,10 @@ namespace KimYoungJoReminder.Models
         public void Reset()
         {
             Stop();
+
+            // Stopwatch 완전 초기화
+            _stopwatch.Reset();
+            _pausedTimeInSeconds = 0;
             CurrentTimeInSeconds = 0;
 
             // 모든 리마인더의 트리거 상태 초기화
