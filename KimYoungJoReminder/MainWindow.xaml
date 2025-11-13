@@ -1,0 +1,63 @@
+﻿<Window x:Class="KimYoungJoReminder.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:KimYoungJoReminder"
+        mc:Ignorable="d"
+        Title="WoW Boss Timeline Reminder" Height="400" Width="1000"
+        Background="#2B2B2B">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="50"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="80"/>
+        </Grid.RowDefinitions>
+
+        <!-- 상단: 보스 프로필 선택 -->
+        <Grid Grid.Row="0" Background="#1E1E1E" Margin="10,10,10,0">
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="10,0">
+                <TextBlock Text="Boss Profile:" Foreground="White" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                <ComboBox x:Name="cmbBossProfile" Width="200" IsEnabled="False">
+                    <ComboBoxItem IsSelected="True">Default Profile</ComboBoxItem>
+                </ComboBox>
+            </StackPanel>
+        </Grid>
+
+        <!-- 중앙: 타임라인 Canvas -->
+        <Border Grid.Row="1" Background="#1A1A1A" Margin="10,10,10,0" BorderBrush="#3F3F3F" BorderThickness="1">
+            <ScrollViewer x:Name="scrollViewer" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
+                <Canvas x:Name="timelineCanvas"
+                        Height="200"
+                        Width="1800"
+                        Background="#252525"
+                        MouseLeftButtonDown="TimelineCanvas_MouseLeftButtonDown"/>
+            </ScrollViewer>
+        </Border>
+
+        <!-- 하단: 컨트롤 버튼 -->
+        <Grid Grid.Row="2" Background="#1E1E1E" Margin="10,10,10,10">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- 현재 시간 표시 -->
+            <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center" Margin="20,0">
+                <TextBlock Text="Current Time:" Foreground="White" FontSize="16" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                <TextBlock x:Name="txtCurrentTime" Text="00:00" Foreground="#4EC9B0" FontSize="24" FontWeight="Bold" VerticalAlignment="Center"/>
+                <TextBlock Text="/ 03:00" Foreground="#808080" FontSize="16" VerticalAlignment="Center" Margin="5,0,0,0"/>
+            </StackPanel>
+
+            <!-- 재생 컨트롤 버튼 -->
+            <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,20,0">
+                <Button x:Name="btnPlay" Content="▶ Play" Width="100" Height="40" Margin="0,0,10,0"
+                        Click="BtnPlay_Click" Background="#0E639C" Foreground="White" FontSize="14" FontWeight="Bold"/>
+                <Button x:Name="btnPause" Content="⏸ Pause" Width="100" Height="40" Margin="0,0,10,0"
+                        Click="BtnPause_Click" Background="#5A5A5A" Foreground="White" FontSize="14" FontWeight="Bold" IsEnabled="False"/>
+                <Button x:Name="btnReset" Content="⏹ Reset" Width="100" Height="40"
+                        Click="BtnReset_Click" Background="#D4342E" Foreground="White" FontSize="14" FontWeight="Bold"/>
+            </StackPanel>
+        </Grid>
+    </Grid>
+</Window>
