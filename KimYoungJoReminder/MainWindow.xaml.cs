@@ -301,7 +301,7 @@ namespace KimYoungJoReminder
         /// </summary>
         private void OnTimeUpdated(object sender, int timeInSeconds)
         {
-            txtCurrentTime.Text = FormatTime(timeInSeconds);
+            txtCurrentTime.Text = _timelineManager.GetFormattedCurrentTimeWithDecimal();
             UpdatePlayheadPosition(timeInSeconds);
         }
 

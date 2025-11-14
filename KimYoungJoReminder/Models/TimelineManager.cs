@@ -241,5 +241,16 @@ namespace KimYoungJoReminder.Models
             int seconds = CurrentTimeInSeconds % 60;
             return string.Format("{0:D2}:{1:D2}", minutes, seconds);
         }
+
+        /// <summary>
+        /// 현재 시간을 소수점 포함하여 반환 (MM:SS.F 형식)
+        /// </summary>
+        public string GetFormattedCurrentTimeWithDecimal()
+        {
+            double totalSeconds = _pausedTimeInSeconds + _stopwatch.Elapsed.TotalSeconds;
+            int minutes = (int)totalSeconds / 60;
+            double seconds = totalSeconds % 60;
+            return string.Format("{0:D2}:{1:00.0}", minutes, seconds);
+        }
     }
 }
