@@ -117,33 +117,19 @@ namespace KimYoungJoReminder
         }
 
         /// <summary>
-        /// 재생 헤드 위치 업데이트 (부드러운 애니메이션)
+        /// 재생 헤드 위치 업데이트
         /// </summary>
-        private void UpdatePlayheadPosition(int timeInSeconds, bool animate = true)
+        private void UpdatePlayheadPosition()
         {
-            double targetX = timeInSeconds * PIXELS_PER_SECOND;
+            // Stopwatch 기반 실시간 위치 계산
+            double totalSeconds = _timelineManager.GetCurrentTimeInSecondsWithDecimal();
+            double targetX = totalSeconds * PIXELS_PER_SECOND;
 
-            if (animate && _timelineManager.State == TimelineState.Playing)
-            {
-                // 1초 동안 부드럽게 이동하는 애니메이션
-                var animation = new System.Windows.Media.Animation.DoubleAnimation
-                {
-                    To = targetX,
-                    Duration = TimeSpan.FromSeconds(1)
-                };
-
-                // X1, X2 모두 애니메이션 적용
-                _playheadLine.BeginAnimation(Line.X1Property, animation);
-                _playheadLine.BeginAnimation(Line.X2Property, animation);
-            }
-            else
-            {
-                // 애니메이션 없이 즉시 이동 (Reset, Pause 시)
-                _playheadLine.BeginAnimation(Line.X1Property, null);
-                _playheadLine.BeginAnimation(Line.X2Property, null);
-                _playheadLine.X1 = targetX;
-                _playheadLine.X2 = targetX;
-            }
+            // 애니메이션 취소하고 직접 위치 설정 (부드러운 업데이트는 0.1초 간격으로 자동)
+            _playheadLine.BeginAnimation(Line.X1Property, null);
+            _playheadLine.BeginAnimation(Line.X2Property, null);
+            _playheadLine.X1 = targetX;
+            _playheadLine.X2 = targetX;
         }
 
         /// <summary>
@@ -302,7 +288,7 @@ namespace KimYoungJoReminder
         private void OnTimeUpdated(object sender, int timeInSeconds)
         {
             txtCurrentTime.Text = _timelineManager.GetFormattedCurrentTimeWithDecimal();
-            UpdatePlayheadPosition(timeInSeconds);
+            UpdatePlayheadPosition();
         }
 
         /// <summary>

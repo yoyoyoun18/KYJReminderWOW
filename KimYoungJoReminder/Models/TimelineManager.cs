@@ -85,15 +85,13 @@ namespace KimYoungJoReminder.Models
             // Stopwatch로부터 실제 경과 시간 계산 (초 단위)
             int newTimeInSeconds = _pausedTimeInSeconds + (int)_stopwatch.Elapsed.TotalSeconds;
 
-            // 시간이 변경되었을 때만 처리
+            // UI는 매 틱마다 업데이트 (소수점 표시를 위해)
+            TimeUpdated?.Invoke(this, newTimeInSeconds);
+
+            // 정수 초가 바뀔 때만 리마인더 체크
             if (newTimeInSeconds != CurrentTimeInSeconds)
             {
                 CurrentTimeInSeconds = newTimeInSeconds;
-
-                // 시간 업데이트 이벤트 발생
-                TimeUpdated?.Invoke(this, CurrentTimeInSeconds);
-
-                // 해당 시간의 리마인더 체크
                 CheckAndTriggerReminders();
             }
 
@@ -251,6 +249,14 @@ namespace KimYoungJoReminder.Models
             int minutes = (int)totalSeconds / 60;
             double seconds = totalSeconds % 60;
             return string.Format("{0:D2}:{1:00.0}", minutes, seconds);
+        }
+
+        /// <summary>
+        /// 현재 시간을 소수점 포함한 초 단위로 반환
+        /// </summary>
+        public double GetCurrentTimeInSecondsWithDecimal()
+        {
+            return _pausedTimeInSeconds + _stopwatch.Elapsed.TotalSeconds;
         }
     }
 }
