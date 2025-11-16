@@ -10,9 +10,8 @@ Liquid Reminder 애드온에서 영감을 받아 제작되었습니다.
 ## ✨ 주요 기능
 
 - **타임라인 기반 리마인더**: 3분 타임라인에 자유롭게 리마인더 추가
-- **정밀한 시간 측정**: Stopwatch 기반 정확한 시간 계산 (소수점 1자리 표시)
-- **부드러운 재생 헤드**: 0.1초 단위로 업데이트되는 실시간 타임라인
-- **토스트 알림**: 우측 하단에 표시되는 비침투적 알림 시스템
+- **리마인더 설정**: 타임라인 중 원하는 부분에 더블 후 알림 받을 내용 작성
+- **토스트 알림**: 표기한 리마인더 시간이 되었을 때, 우측 하단 토스트 알림
 - **재생 컨트롤**: Play/Pause/Reset 기능
 
 ## 🖼️ 스크린샷
@@ -26,9 +25,6 @@ Liquid Reminder 애드온에서 영감을 받아 제작되었습니다.
 
 - **Framework**: .NET Framework 4.5.2
 - **UI**: WPF (Windows Presentation Foundation)
-- **Language**: C# 6.0
-- **IDE**: Visual Studio 2015
-- **Architecture**: MVVM 패턴, Observer 패턴
 
 ## 📦 설치 방법
 
@@ -93,36 +89,6 @@ KimYoungJoReminder/
 └── App.xaml                     # 애플리케이션 진입점
 ```
 
-## 🔧 개발 환경
-
-- **OS**: Windows 7 이상
-- **IDE**: Visual Studio 2015 이상
-- **.NET**: .NET Framework 4.5.2 이상
-- **MSBuild**: 14.0
-
-## 📝 주요 기술 특징
-
-### Stopwatch 기반 정확한 타이머
-- `DispatcherTimer`의 부정확성 문제 해결
-- `Stopwatch`로 실제 경과 시간 측정
-- Pause/Resume 시에도 정확한 시간 유지
-
-### 이벤트 기반 아키텍처
-- Observer Pattern 구현
-- UI와 비즈니스 로직 분리
-- 느슨한 결합(Loose Coupling)
-
-### 소수점 시간 표시
-- 0.1초 단위 실시간 업데이트
-- `MM:SS.F` 형식 (예: `01:23.7`)
-
-## 🐛 알려진 제한사항
-
-- 타임라인 최대 길이: 3분 고정
-- 초당 1개 리마인더만 등록 가능
-- 프로필 저장/불러오기 미구현 (프로그램 종료 시 데이터 손실)
-- 리마인더 수정/삭제 기능 미구현
-
 ## 🗺️ 향후 계획
 
 - [ ] 리마인더 우클릭 메뉴 (수정/삭제)
@@ -131,22 +97,3 @@ KimYoungJoReminder/
 - [ ] 타임라인 길이 사용자 설정
 - [ ] 재생 속도 조절 (0.5x, 1x, 2x)
 - [ ] 여러 토스트 알림 동시 표시 시 쌓기
-
-## 📄 라이선스
-
-이 프로젝트는 MIT 라이선스 하에 배포됩니다.
-
-## 👤 제작자
-
-**yoyounn18**
-
-- GitHub: [@yoyoyoun18](https://github.com/yoyoyoun18)
-- Email: yoyounn88@gmail.com
-
-## 🙏 감사의 글
-
-- [Liquid Reminder](https://www.curseforge.com/wow/addons/liquid-reminder) - UI/UX 영감
-
----
-
-**⭐ 이 프로젝트가 도움이 되셨다면 Star를 눌러주세요!**
