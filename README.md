@@ -14,7 +14,7 @@ Liquid Reminder 애드온에서 영감을 받아 제작되었습니다.
 - **토스트 알림**: 표기한 리마인더 시간이 되었을 때, 우측 하단 토스트 알림
 - **재생 컨트롤**: Play/Pause/Reset 기능
 
-## 🖼️ 스크린샷
+## 🖼️ 미리보기
 
 <!-- 여기에 UI 이미지 추가 -->
 ![메인 화면](./screenshots/main.png)
@@ -74,26 +74,12 @@ KimYoungJoReminder\bin\Debug\KimYoungJoReminder.exe
 - 알림은 5초 후 자동으로 사라짐
 - 알림 클릭 시 즉시 닫힘
 
-## 📁 프로젝트 구조
-
-```
-KimYoungJoReminder/
-├── Models/
-│   ├── ReminderItem.cs          # 리마인더 데이터 모델
-│   ├── TimelineManager.cs       # 타임라인 로직 및 상태 관리
-│   └── TimelineState.cs         # 재생 상태 Enum
-├── Views/
-│   └── ToastNotification.xaml   # 토스트 알림 UI
-├── MainWindow.xaml              # 메인 윈도우 UI
-├── MainWindow.xaml.cs           # 메인 윈도우 로직
-└── App.xaml                     # 애플리케이션 진입점
-```
-
-## 🗺️ 향후 계획
-
+## 🗺️ 업데이트 예정 사항
 - [ ] 리마인더 우클릭 메뉴 (수정/삭제)
 - [ ] JSON 기반 프로필 저장/불러오기
 - [ ] 보스별 프로필 관리
 - [ ] 타임라인 길이 사용자 설정
 - [ ] 재생 속도 조절 (0.5x, 1x, 2x)
 - [ ] 여러 토스트 알림 동시 표시 시 쌓기
+- [ ] Play, Pause, Reset 버튼 키보트 버튼 매핑
+
