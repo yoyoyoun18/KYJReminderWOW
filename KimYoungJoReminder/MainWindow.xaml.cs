@@ -257,7 +257,8 @@ namespace KimYoungJoReminder
                 Height = timelineCanvas.Height - 30,
                 Fill = new SolidColorBrush(Color.FromRgb(255, 165, 0)), // 주황색
                 Stroke = new SolidColorBrush(Colors.White),
-                StrokeThickness = 1
+                StrokeThickness = 1,
+                Tag = timeInSeconds // 시간 정보 저장
             };
 
             Canvas.SetLeft(marker, x - 4);
@@ -267,7 +268,134 @@ namespace KimYoungJoReminder
             // 툴팁 추가
             marker.ToolTip = $"{FormatTime(timeInSeconds)}: {text}";
 
+            // 컨텍스트 메뉴 생성
+            ContextMenu contextMenu = new ContextMenu();
+
+            MenuItem editMenuItem = new MenuItem { Header = "수정" };
+            editMenuItem.Click += (s, e) => EditReminder(timeInSeconds);
+
+            MenuItem deleteMenuItem = new MenuItem { Header = "삭제" };
+            deleteMenuItem.Click += (s, e) => DeleteReminder(timeInSeconds);
+
+            contextMenu.Items.Add(editMenuItem);
+            contextMenu.Items.Add(deleteMenuItem);
+            marker.ContextMenu = contextMenu;
+
             _reminderMarkers[timeInSeconds] = marker;
+        }
+
+        /// <summary>
+        /// 리마인더 삭제
+        /// </summary>
+        private void DeleteReminder(int timeInSeconds)
+        {
+            // TimelineManager에서 삭제
+            if (_timelineManager.RemoveReminder(timeInSeconds))
+            {
+                // UI에서 마커 제거
+                if (_reminderMarkers.ContainsKey(timeInSeconds))
+                {
+                    Rectangle marker = _reminderMarkers[timeInSeconds];
+                    timelineCanvas.Children.Remove(marker);
+                    _reminderMarkers.Remove(timeInSeconds);
+                }
+            }
+        }
+
+        /// <summary>
+        /// 리마인더 수정
+        /// </summary>
+        private void EditReminder(int timeInSeconds)
+        {
+            // 기존 리마인더 정보 가져오기
+            var existingReminder = _timelineManager.GetAllReminders()
+                .FirstOrDefault(r => r.TimeInSeconds == timeInSeconds);
+
+            if (existingReminder == null)
+                return;
+
+            // 입력 다이얼로그 표시
+            var inputWindow = new Window
+            {
+                Title = "Edit Reminder",
+                Width = 400,
+                Height = 150,
+                WindowStartupLocation = WindowStartupLocation.CenterOwner,
+                Owner = this,
+                Background = new SolidColorBrush(Color.FromRgb(45, 45, 45))
+            };
+
+            var grid = new Grid { Margin = new Thickness(10) };
+            grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+            grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+            grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+
+            // 시간 표시
+            var timeLabel = new TextBlock
+            {
+                Text = $"Time: {FormatTime(timeInSeconds)}",
+                Foreground = new SolidColorBrush(Colors.White),
+                Margin = new Thickness(0, 0, 0, 10)
+            };
+            Grid.SetRow(timeLabel, 0);
+            grid.Children.Add(timeLabel);
+
+            // 텍스트 입력 (기존 텍스트로 초기화)
+            var textBox = new TextBox
+            {
+                Text = existingReminder.Text,
+                Margin = new Thickness(0, 0, 0, 10),
+                Padding = new Thickness(5)
+            };
+            Grid.SetRow(textBox, 1);
+            grid.Children.Add(textBox);
+
+            // 버튼 패널
+            var buttonPanel = new StackPanel
+            {
+                Orientation = Orientation.Horizontal,
+                HorizontalAlignment = HorizontalAlignment.Right
+            };
+
+            var okButton = new Button
+            {
+                Content = "OK",
+                Width = 80,
+                Height = 30,
+                Margin = new Thickness(0, 0, 10, 0)
+            };
+            okButton.Click += (s, e) =>
+            {
+                if (!string.IsNullOrWhiteSpace(textBox.Text))
+                {
+                    // 기존 텍스트 업데이트
+                    existingReminder.Text = textBox.Text;
+
+                    // UI 마커의 툴팁 업데이트
+                    if (_reminderMarkers.ContainsKey(timeInSeconds))
+                    {
+                        _reminderMarkers[timeInSeconds].ToolTip = $"{FormatTime(timeInSeconds)}: {textBox.Text}";
+                    }
+
+                    inputWindow.DialogResult = true;
+                }
+            };
+
+            var cancelButton = new Button
+            {
+                Content = "Cancel",
+                Width = 80,
+                Height = 30
+            };
+            cancelButton.Click += (s, e) => { inputWindow.DialogResult = false; };
+
+            buttonPanel.Children.Add(okButton);
+            buttonPanel.Children.Add(cancelButton);
+            Grid.SetRow(buttonPanel, 2);
+            grid.Children.Add(buttonPanel);
+
+            inputWindow.Content = grid;
+            inputWindow.ShowDialog();
         }
 
         /// <summary>
