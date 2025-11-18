@@ -36,6 +36,13 @@ namespace KimYoungJoReminder
         /// </summary>
         private Dictionary<int, Rectangle> _reminderMarkers;
 
+        /// <summary>
+        /// 드래그 리사이징 상태
+        /// </summary>
+        private bool _isResizing = false;
+        private Rectangle _resizingMarker = null;
+        private double _resizeStartX = 0;
+
         public MainWindow()
         {
             InitializeComponent();
@@ -166,7 +173,7 @@ namespace KimYoungJoReminder
             {
                 Title = "Add Reminder",
                 Width = 400,
-                Height = 150,
+                Height = 200,
                 WindowStartupLocation = WindowStartupLocation.CenterOwner,
                 Owner = this,
                 Background = new SolidColorBrush(Color.FromRgb(45, 45, 45))
@@ -176,11 +183,12 @@ namespace KimYoungJoReminder
             grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
             grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
             grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+            grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
 
             // 시간 표시
             var timeLabel = new TextBlock
             {
-                Text = $"Time: {FormatTime(timeInSeconds)}",
+                Text = $"Start Time: {FormatTime(timeInSeconds)}",
                 Foreground = new SolidColorBrush(Colors.White),
                 Margin = new Thickness(0, 0, 0, 10)
             };
@@ -195,6 +203,30 @@ namespace KimYoungJoReminder
             };
             Grid.SetRow(textBox, 1);
             grid.Children.Add(textBox);
+
+            // Duration 입력
+            var durationPanel = new StackPanel
+            {
+                Orientation = Orientation.Horizontal,
+                Margin = new Thickness(0, 0, 0, 10)
+            };
+            var durationLabel = new TextBlock
+            {
+                Text = "Duration (seconds):",
+                Foreground = new SolidColorBrush(Colors.White),
+                VerticalAlignment = VerticalAlignment.Center,
+                Margin = new Thickness(0, 0, 10, 0)
+            };
+            var durationTextBox = new TextBox
+            {
+                Text = "5",
+                Width = 60,
+                Padding = new Thickness(5)
+            };
+            durationPanel.Children.Add(durationLabel);
+            durationPanel.Children.Add(durationTextBox);
+            Grid.SetRow(durationPanel, 2);
+            grid.Children.Add(durationPanel);
 
             // 버튼 패널
             var buttonPanel = new StackPanel
@@ -214,9 +246,13 @@ namespace KimYoungJoReminder
             {
                 if (!string.IsNullOrWhiteSpace(textBox.Text))
                 {
-                    if (_timelineManager.AddReminder(timeInSeconds, textBox.Text))
+                    int duration = 5;
+                    int.TryParse(durationTextBox.Text, out duration);
+                    if (duration < 1) duration = 1;
+
+                    if (_timelineManager.AddReminder(timeInSeconds, textBox.Text, duration))
                     {
-                        AddReminderMarker(timeInSeconds, textBox.Text);
+                        AddReminderMarker(timeInSeconds, textBox.Text, duration);
                         inputWindow.DialogResult = true;
                     }
                     else
@@ -236,7 +272,7 @@ namespace KimYoungJoReminder
 
             buttonPanel.Children.Add(okButton);
             buttonPanel.Children.Add(cancelButton);
-            Grid.SetRow(buttonPanel, 2);
+            Grid.SetRow(buttonPanel, 3);
             grid.Children.Add(buttonPanel);
 
             inputWindow.Content = grid;
@@ -246,27 +282,30 @@ namespace KimYoungJoReminder
         /// <summary>
         /// 타임라인에 리마인더 마커 추가
         /// </summary>
-        private void AddReminderMarker(int timeInSeconds, string text)
+        private void AddReminderMarker(int timeInSeconds, string text, int duration)
         {
             double x = timeInSeconds * PIXELS_PER_SECOND;
+            double width = duration * PIXELS_PER_SECOND;
 
             // 마커 사각형
             Rectangle marker = new Rectangle
             {
-                Width = 8,
+                Width = width,
                 Height = timelineCanvas.Height - 30,
                 Fill = new SolidColorBrush(Color.FromRgb(255, 165, 0)), // 주황색
                 Stroke = new SolidColorBrush(Colors.White),
                 StrokeThickness = 1,
-                Tag = timeInSeconds // 시간 정보 저장
+                Tag = timeInSeconds, // 시작 시간 정보 저장
+                Cursor = Cursors.Hand
             };
 
-            Canvas.SetLeft(marker, x - 4);
+            Canvas.SetLeft(marker, x);
             Canvas.SetTop(marker, 30);
             timelineCanvas.Children.Add(marker);
 
-            // 툴팁 추가
-            marker.ToolTip = $"{FormatTime(timeInSeconds)}: {text}";
+            // 툴팁 추가 (시작~종료 시간 표시)
+            int endTime = timeInSeconds + duration;
+            marker.ToolTip = $"{FormatTime(timeInSeconds)} ~ {FormatTime(endTime)}: {text}";
 
             // 컨텍스트 메뉴 생성
             ContextMenu contextMenu = new ContextMenu();
@@ -280,6 +319,13 @@ namespace KimYoungJoReminder
             contextMenu.Items.Add(editMenuItem);
             contextMenu.Items.Add(deleteMenuItem);
             marker.ContextMenu = contextMenu;
+
+            // 마우스 이벤트 추가 (드래그 리사이징)
+            marker.MouseDown += Marker_MouseDown;
+            marker.MouseMove += Marker_MouseMove;
+            marker.MouseUp += Marker_MouseUp;
+            marker.MouseEnter += Marker_MouseEnter;
+            marker.MouseLeave += Marker_MouseLeave;
 
             _reminderMarkers[timeInSeconds] = marker;
         }
@@ -480,6 +526,129 @@ namespace KimYoungJoReminder
         private void BtnReset_Click(object sender, RoutedEventArgs e)
         {
             _timelineManager.Reset();
+        }
+
+        /// <summary>
+        /// 마커 마우스 엔터 - 리사이징 영역이면 커서 변경
+        /// </summary>
+        private void Marker_MouseEnter(object sender, MouseEventArgs e)
+        {
+            var marker = sender as Rectangle;
+            if (marker != null)
+            {
+                Point pos = e.GetPosition(marker);
+                if (pos.X > marker.Width - 5) // 오른쪽 끝 5px 이내
+                {
+                    marker.Cursor = Cursors.SizeWE;
+                }
+                else
+                {
+                    marker.Cursor = Cursors.Hand;
+                }
+            }
+        }
+
+        /// <summary>
+        /// 마커 마우스 리브 - 커서 초기화
+        /// </summary>
+        private void Marker_MouseLeave(object sender, MouseEventArgs e)
+        {
+            var marker = sender as Rectangle;
+            if (!_isResizing && marker != null)
+            {
+                marker.Cursor = Cursors.Hand;
+            }
+        }
+
+        /// <summary>
+        /// 마커 마우스 다운 - 드래그 시작
+        /// </summary>
+        private void Marker_MouseDown(object sender, MouseButtonEventArgs e)
+        {
+            var marker = sender as Rectangle;
+            if (e.LeftButton == MouseButtonState.Pressed && marker != null)
+            {
+                Point pos = e.GetPosition(marker);
+                if (pos.X > marker.Width - 5) // 오른쪽 끝 리사이징
+                {
+                    _isResizing = true;
+                    _resizingMarker = marker;
+                    _resizeStartX = e.GetPosition(timelineCanvas).X;
+                    marker.CaptureMouse();
+                    e.Handled = true; // 컨텍스트 메뉴 방지
+                }
+            }
+        }
+
+        /// <summary>
+        /// 마커 마우스 이동 - 리사이징 중 크기 조절
+        /// </summary>
+        private void Marker_MouseMove(object sender, MouseEventArgs e)
+        {
+            if (_isResizing && _resizingMarker != null)
+            {
+                double currentX = e.GetPosition(timelineCanvas).X;
+                double markerLeft = Canvas.GetLeft(_resizingMarker);
+                double newWidth = currentX - markerLeft;
+
+                // 최소 너비 (1초 = 10px)
+                if (newWidth >= PIXELS_PER_SECOND)
+                {
+                    _resizingMarker.Width = newWidth;
+
+                    // 툴팁 업데이트
+                    int timeInSeconds = (int)_resizingMarker.Tag;
+                    int duration = (int)(newWidth / PIXELS_PER_SECOND);
+                    var reminder = _timelineManager.GetAllReminders()
+                        .FirstOrDefault(r => r.TimeInSeconds == timeInSeconds);
+                    if (reminder != null)
+                    {
+                        int endTime = timeInSeconds + duration;
+                        _resizingMarker.ToolTip = $"{FormatTime(timeInSeconds)} ~ {FormatTime(endTime)}: {reminder.Text}";
+                    }
+                }
+            }
+            else
+            {
+                var marker = sender as Rectangle;
+                if (marker != null)
+                {
+                    // 커서 변경 (리사이징 영역 체크)
+                    Point pos = e.GetPosition(marker);
+                    if (pos.X > marker.Width - 5)
+                    {
+                        marker.Cursor = Cursors.SizeWE;
+                    }
+                    else
+                    {
+                        marker.Cursor = Cursors.Hand;
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// 마커 마우스 업 - 드래그 종료 및 데이터 동기화
+        /// </summary>
+        private void Marker_MouseUp(object sender, MouseButtonEventArgs e)
+        {
+            if (_isResizing && _resizingMarker != null)
+            {
+                // TimelineManager 데이터 업데이트
+                int timeInSeconds = (int)_resizingMarker.Tag;
+                int newDuration = (int)(_resizingMarker.Width / PIXELS_PER_SECOND);
+
+                var reminder = _timelineManager.GetAllReminders()
+                    .FirstOrDefault(r => r.TimeInSeconds == timeInSeconds);
+                if (reminder != null)
+                {
+                    reminder.Duration = newDuration;
+                }
+
+                _resizingMarker.ReleaseMouseCapture();
+                _resizingMarker = null;
+                _isResizing = false;
+            }
         }
 
         #endregion

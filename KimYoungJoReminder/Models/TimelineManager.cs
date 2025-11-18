@@ -182,17 +182,21 @@ namespace KimYoungJoReminder.Models
         /// <summary>
         /// 리마인더 추가
         /// </summary>
-        public bool AddReminder(int timeInSeconds, string text)
+        public bool AddReminder(int timeInSeconds, string text, int duration = 1)
         {
             // 유효성 검사
             if (timeInSeconds < 0 || timeInSeconds >= MAX_TIMELINE_SECONDS)
                 return false;
 
-            // 동일 시간대에 이미 리마인더가 있는지 체크 (초당 1개만 허용)
+            // 종료 시간이 타임라인을 초과하지 않도록
+            if (timeInSeconds + duration > MAX_TIMELINE_SECONDS)
+                duration = MAX_TIMELINE_SECONDS - timeInSeconds;
+
+            // 동일 시간대에 이미 리마인더가 있는지 체크
             if (_reminders.Any(r => r.TimeInSeconds == timeInSeconds))
                 return false;
 
-            _reminders.Add(new ReminderItem(timeInSeconds, text));
+            _reminders.Add(new ReminderItem(timeInSeconds, text, duration));
             return true;
         }
 

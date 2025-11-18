@@ -8,9 +8,14 @@ namespace KimYoungJoReminder.Models
     public class ReminderItem
     {
         /// <summary>
-        /// 리마인더가 표시될 시간 (초 단위)
+        /// 리마인더가 시작될 시간 (초 단위)
         /// </summary>
         public int TimeInSeconds { get; set; }
+
+        /// <summary>
+        /// 리마인더 지속 시간 (초 단위)
+        /// </summary>
+        public int Duration { get; set; }
 
         /// <summary>
         /// 표시할 텍스트
@@ -22,20 +27,40 @@ namespace KimYoungJoReminder.Models
         /// </summary>
         public bool HasTriggered { get; set; }
 
-        public ReminderItem(int timeInSeconds, string text)
+        public ReminderItem(int timeInSeconds, string text, int duration = 1)
         {
             TimeInSeconds = timeInSeconds;
             Text = text;
+            Duration = duration;
             HasTriggered = false;
         }
 
         /// <summary>
-        /// 시간을 MM:SS 형식으로 반환
+        /// 종료 시간 계산
+        /// </summary>
+        public int GetEndTimeInSeconds()
+        {
+            return TimeInSeconds + Duration;
+        }
+
+        /// <summary>
+        /// 시작 시간을 MM:SS 형식으로 반환
         /// </summary>
         public string GetFormattedTime()
         {
             int minutes = TimeInSeconds / 60;
             int seconds = TimeInSeconds % 60;
+            return string.Format("{0:D2}:{1:D2}", minutes, seconds);
+        }
+
+        /// <summary>
+        /// 종료 시간을 MM:SS 형식으로 반환
+        /// </summary>
+        public string GetFormattedEndTime()
+        {
+            int endTime = GetEndTimeInSeconds();
+            int minutes = endTime / 60;
+            int seconds = endTime % 60;
             return string.Format("{0:D2}:{1:D2}", minutes, seconds);
         }
     }
