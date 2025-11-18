@@ -7,7 +7,8 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Shapes;
 using KimYoungJoReminder.Models;
-using KimYoungJoReminder.Views;
+using KimYoungJoReminder.Pages;
+using KimYoungJoReminder.Components;
 
 namespace KimYoungJoReminder
 {
@@ -32,16 +33,9 @@ namespace KimYoungJoReminder
         private Line _playheadLine;
 
         /// <summary>
-        /// 리마인더 마커 딕셔너리 (시간 -> Rectangle)
+        /// 리마인더 마커 리스트
         /// </summary>
-        private Dictionary<int, Rectangle> _reminderMarkers;
-
-        /// <summary>
-        /// 드래그 리사이징 상태
-        /// </summary>
-        private bool _isResizing = false;
-        private Rectangle _resizingMarker = null;
-        private double _resizeStartX = 0;
+        private List<ReminderMarker> _reminderMarkers;
 
         public MainWindow()
         {
@@ -55,7 +49,7 @@ namespace KimYoungJoReminder
         private void Initialize()
         {
             _timelineManager = new TimelineManager();
-            _reminderMarkers = new Dictionary<int, Rectangle>();
+            _reminderMarkers = new List<ReminderMarker>();
 
             // TimelineManager 이벤트 구독
             _timelineManager.TimeUpdated += OnTimeUpdated;
@@ -284,66 +278,37 @@ namespace KimYoungJoReminder
         /// </summary>
         private void AddReminderMarker(int timeInSeconds, string text, int duration)
         {
-            double x = timeInSeconds * PIXELS_PER_SECOND;
-            double width = duration * PIXELS_PER_SECOND;
+            // ReminderItem 찾기
+            var reminderItem = _timelineManager.GetAllReminders()
+                .FirstOrDefault(r => r.TimeInSeconds == timeInSeconds);
 
-            // 마커 사각형
-            Rectangle marker = new Rectangle
+            if (reminderItem != null)
             {
-                Width = width,
-                Height = timelineCanvas.Height - 30,
-                Fill = new SolidColorBrush(Color.FromRgb(255, 165, 0)), // 주황색
-                Stroke = new SolidColorBrush(Colors.White),
-                StrokeThickness = 1,
-                Tag = timeInSeconds, // 시작 시간 정보 저장
-                Cursor = Cursors.Hand
-            };
+                // ReminderMarker 컴포넌트 생성
+                var marker = new ReminderMarker(reminderItem, timelineCanvas, _timelineManager, PIXELS_PER_SECOND);
 
-            Canvas.SetLeft(marker, x);
-            Canvas.SetTop(marker, 30);
-            timelineCanvas.Children.Add(marker);
+                // 이벤트 구독
+                marker.EditRequested += (s, e) => EditReminder(reminderItem);
+                marker.DeleteRequested += (s, e) => DeleteReminder(reminderItem);
 
-            // 툴팁 추가 (시작~종료 시간 표시)
-            int endTime = timeInSeconds + duration;
-            marker.ToolTip = $"{FormatTime(timeInSeconds)} ~ {FormatTime(endTime)}: {text}";
-
-            // 컨텍스트 메뉴 생성
-            ContextMenu contextMenu = new ContextMenu();
-
-            MenuItem editMenuItem = new MenuItem { Header = "수정" };
-            editMenuItem.Click += (s, e) => EditReminder(timeInSeconds);
-
-            MenuItem deleteMenuItem = new MenuItem { Header = "삭제" };
-            deleteMenuItem.Click += (s, e) => DeleteReminder(timeInSeconds);
-
-            contextMenu.Items.Add(editMenuItem);
-            contextMenu.Items.Add(deleteMenuItem);
-            marker.ContextMenu = contextMenu;
-
-            // 마우스 이벤트 추가 (드래그 리사이징)
-            marker.MouseDown += Marker_MouseDown;
-            marker.MouseMove += Marker_MouseMove;
-            marker.MouseUp += Marker_MouseUp;
-            marker.MouseEnter += Marker_MouseEnter;
-            marker.MouseLeave += Marker_MouseLeave;
-
-            _reminderMarkers[timeInSeconds] = marker;
+                _reminderMarkers.Add(marker);
+            }
         }
 
         /// <summary>
         /// 리마인더 삭제
         /// </summary>
-        private void DeleteReminder(int timeInSeconds)
+        private void DeleteReminder(ReminderItem reminderItem)
         {
             // TimelineManager에서 삭제
-            if (_timelineManager.RemoveReminder(timeInSeconds))
+            if (_timelineManager.RemoveReminder(reminderItem.TimeInSeconds))
             {
                 // UI에서 마커 제거
-                if (_reminderMarkers.ContainsKey(timeInSeconds))
+                var marker = _reminderMarkers.FirstOrDefault(m => m.Data == reminderItem);
+                if (marker != null)
                 {
-                    Rectangle marker = _reminderMarkers[timeInSeconds];
-                    timelineCanvas.Children.Remove(marker);
-                    _reminderMarkers.Remove(timeInSeconds);
+                    marker.Remove();
+                    _reminderMarkers.Remove(marker);
                 }
             }
         }
@@ -351,13 +316,9 @@ namespace KimYoungJoReminder
         /// <summary>
         /// 리마인더 수정
         /// </summary>
-        private void EditReminder(int timeInSeconds)
+        private void EditReminder(ReminderItem reminderItem)
         {
-            // 기존 리마인더 정보 가져오기
-            var existingReminder = _timelineManager.GetAllReminders()
-                .FirstOrDefault(r => r.TimeInSeconds == timeInSeconds);
-
-            if (existingReminder == null)
+            if (reminderItem == null)
                 return;
 
             // 입력 다이얼로그 표시
@@ -379,7 +340,7 @@ namespace KimYoungJoReminder
             // 시간 표시
             var timeLabel = new TextBlock
             {
-                Text = $"Time: {FormatTime(timeInSeconds)}",
+                Text = $"Time: {FormatTime(reminderItem.TimeInSeconds)}",
                 Foreground = new SolidColorBrush(Colors.White),
                 Margin = new Thickness(0, 0, 0, 10)
             };
@@ -389,7 +350,7 @@ namespace KimYoungJoReminder
             // 텍스트 입력 (기존 텍스트로 초기화)
             var textBox = new TextBox
             {
-                Text = existingReminder.Text,
+                Text = reminderItem.Text,
                 Margin = new Thickness(0, 0, 0, 10),
                 Padding = new Thickness(5)
             };
@@ -415,12 +376,13 @@ namespace KimYoungJoReminder
                 if (!string.IsNullOrWhiteSpace(textBox.Text))
                 {
                     // 기존 텍스트 업데이트
-                    existingReminder.Text = textBox.Text;
+                    reminderItem.Text = textBox.Text;
 
                     // UI 마커의 툴팁 업데이트
-                    if (_reminderMarkers.ContainsKey(timeInSeconds))
+                    var marker = _reminderMarkers.FirstOrDefault(m => m.Data == reminderItem);
+                    if (marker != null)
                     {
-                        _reminderMarkers[timeInSeconds].ToolTip = $"{FormatTime(timeInSeconds)}: {textBox.Text}";
+                        marker.UpdateUI();
                     }
 
                     inputWindow.DialogResult = true;
@@ -526,129 +488,6 @@ namespace KimYoungJoReminder
         private void BtnReset_Click(object sender, RoutedEventArgs e)
         {
             _timelineManager.Reset();
-        }
-
-        /// <summary>
-        /// 마커 마우스 엔터 - 리사이징 영역이면 커서 변경
-        /// </summary>
-        private void Marker_MouseEnter(object sender, MouseEventArgs e)
-        {
-            var marker = sender as Rectangle;
-            if (marker != null)
-            {
-                Point pos = e.GetPosition(marker);
-                if (pos.X > marker.Width - 5) // 오른쪽 끝 5px 이내
-                {
-                    marker.Cursor = Cursors.SizeWE;
-                }
-                else
-                {
-                    marker.Cursor = Cursors.Hand;
-                }
-            }
-        }
-
-        /// <summary>
-        /// 마커 마우스 리브 - 커서 초기화
-        /// </summary>
-        private void Marker_MouseLeave(object sender, MouseEventArgs e)
-        {
-            var marker = sender as Rectangle;
-            if (!_isResizing && marker != null)
-            {
-                marker.Cursor = Cursors.Hand;
-            }
-        }
-
-        /// <summary>
-        /// 마커 마우스 다운 - 드래그 시작
-        /// </summary>
-        private void Marker_MouseDown(object sender, MouseButtonEventArgs e)
-        {
-            var marker = sender as Rectangle;
-            if (e.LeftButton == MouseButtonState.Pressed && marker != null)
-            {
-                Point pos = e.GetPosition(marker);
-                if (pos.X > marker.Width - 5) // 오른쪽 끝 리사이징
-                {
-                    _isResizing = true;
-                    _resizingMarker = marker;
-                    _resizeStartX = e.GetPosition(timelineCanvas).X;
-                    marker.CaptureMouse();
-                    e.Handled = true; // 컨텍스트 메뉴 방지
-                }
-            }
-        }
-
-        /// <summary>
-        /// 마커 마우스 이동 - 리사이징 중 크기 조절
-        /// </summary>
-        private void Marker_MouseMove(object sender, MouseEventArgs e)
-        {
-            if (_isResizing && _resizingMarker != null)
-            {
-                double currentX = e.GetPosition(timelineCanvas).X;
-                double markerLeft = Canvas.GetLeft(_resizingMarker);
-                double newWidth = currentX - markerLeft;
-
-                // 최소 너비 (1초 = 10px)
-                if (newWidth >= PIXELS_PER_SECOND)
-                {
-                    _resizingMarker.Width = newWidth;
-
-                    // 툴팁 업데이트
-                    int timeInSeconds = (int)_resizingMarker.Tag;
-                    int duration = (int)(newWidth / PIXELS_PER_SECOND);
-                    var reminder = _timelineManager.GetAllReminders()
-                        .FirstOrDefault(r => r.TimeInSeconds == timeInSeconds);
-                    if (reminder != null)
-                    {
-                        int endTime = timeInSeconds + duration;
-                        _resizingMarker.ToolTip = $"{FormatTime(timeInSeconds)} ~ {FormatTime(endTime)}: {reminder.Text}";
-                    }
-                }
-            }
-            else
-            {
-                var marker = sender as Rectangle;
-                if (marker != null)
-                {
-                    // 커서 변경 (리사이징 영역 체크)
-                    Point pos = e.GetPosition(marker);
-                    if (pos.X > marker.Width - 5)
-                    {
-                        marker.Cursor = Cursors.SizeWE;
-                    }
-                    else
-                    {
-                        marker.Cursor = Cursors.Hand;
-                    }
-                }
-            }
-        }
-
-        /// <summary>
-        /// 마커 마우스 업 - 드래그 종료 및 데이터 동기화
-        /// </summary>
-        private void Marker_MouseUp(object sender, MouseButtonEventArgs e)
-        {
-            if (_isResizing && _resizingMarker != null)
-            {
-                // TimelineManager 데이터 업데이트
-                int timeInSeconds = (int)_resizingMarker.Tag;
-                int newDuration = (int)(_resizingMarker.Width / PIXELS_PER_SECOND);
-
-                var reminder = _timelineManager.GetAllReminders()
-                    .FirstOrDefault(r => r.TimeInSeconds == timeInSeconds);
-                if (reminder != null)
-                {
-                    reminder.Duration = newDuration;
-                }
-
-                _resizingMarker.ReleaseMouseCapture();
-                _resizingMarker = null;
-                _isResizing = false;
-            }
         }
 
         #endregion

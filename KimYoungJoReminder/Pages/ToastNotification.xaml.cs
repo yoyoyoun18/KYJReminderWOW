@@ -3,7 +3,7 @@ using System.Windows;
 using System.Windows.Media.Animation;
 using System.Windows.Threading;
 
-namespace KimYoungJoReminder.Views
+namespace KimYoungJoReminder.Pages
 {
     /// <summary>
     /// 토스트 알림 윈도우

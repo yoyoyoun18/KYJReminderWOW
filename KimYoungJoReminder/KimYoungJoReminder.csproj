@@ -59,7 +59,7 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>
-    <Page Include="Views\ToastNotification.xaml">
+    <Page Include="Pages\ToastNotification.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>
@@ -71,10 +71,11 @@
       <DependentUpon>MainWindow.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="Components\ReminderMarker.cs" />
     <Compile Include="Models\ReminderItem.cs" />
     <Compile Include="Models\TimelineManager.cs" />
     <Compile Include="Models\TimelineState.cs" />
-    <Compile Include="Views\ToastNotification.xaml.cs">
+    <Compile Include="Pages\ToastNotification.xaml.cs">
       <DependentUpon>ToastNotification.xaml</DependentUpon>
     </Compile>
   </ItemGroup>
@@ -106,8 +107,9 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
+    <Folder Include="Components\" />
     <Folder Include="Models\" />
-    <Folder Include="Views\" />
+    <Folder Include="Pages\" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
