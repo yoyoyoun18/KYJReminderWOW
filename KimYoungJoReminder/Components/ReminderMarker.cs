@@ -89,7 +89,7 @@ namespace KimYoungJoReminder.Components
             MarkerUI = new Rectangle
             {
                 Width = width,
-                Height = _canvas.Height - 30,
+                Height = _canvas.Height - 180,
                 Fill = new SolidColorBrush(Color.FromRgb(255, 165, 0)), // 주황색
                 Stroke = new SolidColorBrush(Colors.White),
                 StrokeThickness = 1,
