@@ -536,7 +536,6 @@ namespace KimYoungJoReminder
                 string selectedBoss = selectedItem.Content.ToString();
 
                 // TODO: 선택된 보스에 따라 프로필 로드
-                MessageBox.Show($"Selected: {selectedBoss}", "Boss Profile", MessageBoxButton.OK, MessageBoxImage.Information);
             }
         }
 
