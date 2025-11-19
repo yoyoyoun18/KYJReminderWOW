@@ -526,11 +526,12 @@ namespace KimYoungJoReminder
         /// </summary>
         private void CmbBossProfile_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            if (cmbBossProfile.SelectedItem == null)
+            // 초기화 중에는 이벤트 무시
+            if (cmbBossProfile == null || cmbBossProfile.SelectedItem == null)
                 return;
 
             var selectedItem = cmbBossProfile.SelectedItem as ComboBoxItem;
-            if (selectedItem != null)
+            if (selectedItem != null && selectedItem.Content != null)
             {
                 string selectedBoss = selectedItem.Content.ToString();
 
