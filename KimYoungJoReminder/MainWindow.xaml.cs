@@ -521,6 +521,24 @@ namespace KimYoungJoReminder
             _timelineManager.Reset();
         }
 
+        /// <summary>
+        /// Boss Profile 선택 변경
+        /// </summary>
+        private void CmbBossProfile_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (cmbBossProfile.SelectedItem == null)
+                return;
+
+            var selectedItem = cmbBossProfile.SelectedItem as ComboBoxItem;
+            if (selectedItem != null)
+            {
+                string selectedBoss = selectedItem.Content.ToString();
+
+                // TODO: 선택된 보스에 따라 프로필 로드
+                MessageBox.Show($"Selected: {selectedBoss}", "Boss Profile", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+        }
+
         #endregion
     }
 }

@@ -18,8 +18,10 @@
         <Grid Grid.Row="0" Background="#1E1E1E" Margin="10,10,10,0">
             <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="10,0">
                 <TextBlock Text="Boss Profile:" Foreground="White" VerticalAlignment="Center" Margin="0,0,10,0"/>
-                <ComboBox x:Name="cmbBossProfile" Width="200" IsEnabled="False">
-                    <ComboBoxItem IsSelected="True">Default Profile</ComboBoxItem>
+                <ComboBox x:Name="cmbBossProfile" Width="200" SelectionChanged="CmbBossProfile_SelectionChanged">
+                    <ComboBoxItem IsSelected="True">Boss 1</ComboBoxItem>
+                    <ComboBoxItem>Boss 2</ComboBoxItem>
+                    <ComboBoxItem>Boss 3</ComboBoxItem>
                 </ComboBox>
             </StackPanel>
         </Grid>
