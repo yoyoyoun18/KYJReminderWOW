@@ -52,6 +52,21 @@ namespace KimYoungJoReminder.Components
         /// </summary>
         private const double RESIZE_HANDLE_WIDTH = 5;
 
+        /// <summary>
+        /// 시간 라벨 영역 높이
+        /// </summary>
+        private const double TIME_LABEL_HEIGHT = 30;
+
+        /// <summary>
+        /// Lane당 높이 (마커 높이 + 간격)
+        /// </summary>
+        private const double LANE_HEIGHT = 25;
+
+        /// <summary>
+        /// 마커 실제 높이
+        /// </summary>
+        private const double MARKER_HEIGHT = 20;
+
         #endregion
 
         #region Constructor
@@ -86,10 +101,13 @@ namespace KimYoungJoReminder.Components
             double x = Data.TimeInSeconds * _pixelsPerSecond;
             double width = Data.Duration * _pixelsPerSecond;
 
+            // Lane에 따른 Y 위치 계산
+            double y = TIME_LABEL_HEIGHT + (Data.Lane * LANE_HEIGHT);
+
             MarkerUI = new Rectangle
             {
                 Width = width,
-                Height = _canvas.Height - 180,
+                Height = MARKER_HEIGHT,
                 Fill = new SolidColorBrush(Color.FromRgb(255, 165, 0)), // 주황색
                 Stroke = new SolidColorBrush(Colors.White),
                 StrokeThickness = 1,
@@ -98,7 +116,7 @@ namespace KimYoungJoReminder.Components
             };
 
             Canvas.SetLeft(MarkerUI, x);
-            Canvas.SetTop(MarkerUI, 30);
+            Canvas.SetTop(MarkerUI, y);
 
             UpdateTooltip();
             CreateContextMenu();
@@ -296,8 +314,10 @@ namespace KimYoungJoReminder.Components
         {
             double x = Data.TimeInSeconds * _pixelsPerSecond;
             double width = Data.Duration * _pixelsPerSecond;
+            double y = TIME_LABEL_HEIGHT + (Data.Lane * LANE_HEIGHT);
 
             Canvas.SetLeft(MarkerUI, x);
+            Canvas.SetTop(MarkerUI, y);
             MarkerUI.Width = width;
             UpdateTooltip();
         }

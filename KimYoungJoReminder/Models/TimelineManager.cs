@@ -196,8 +196,65 @@ namespace KimYoungJoReminder.Models
             if (_reminders.Any(r => r.TimeInSeconds == timeInSeconds))
                 return false;
 
-            _reminders.Add(new ReminderItem(timeInSeconds, text, duration));
+            // 새 리마인더 생성
+            var newReminder = new ReminderItem(timeInSeconds, text, duration);
+
+            // Lane 자동 할당
+            newReminder.Lane = FindAvailableLane(newReminder);
+
+            _reminders.Add(newReminder);
             return true;
+        }
+
+        /// <summary>
+        /// 리마인더가 배치될 수 있는 가장 낮은 Lane 찾기
+        /// </summary>
+        private int FindAvailableLane(ReminderItem newReminder)
+        {
+            int lane = 0;
+
+            while (true)
+            {
+                // 현재 Lane에 있는 리마인더들 가져오기
+                var remindersInLane = _reminders.Where(r => r.Lane == lane);
+
+                // 이 Lane에서 겹치는 리마인더가 있는지 확인
+                bool hasOverlap = remindersInLane.Any(r => IsOverlapping(r, newReminder));
+
+                if (!hasOverlap)
+                {
+                    // 겹치지 않으면 이 Lane 사용
+                    return lane;
+                }
+
+                // 겹치면 다음 Lane 확인
+                lane++;
+
+                // 무한 루프 방지 (최대 100개 Lane)
+                if (lane >= 100)
+                    return 0;
+            }
+        }
+
+        /// <summary>
+        /// 두 리마인더가 시간상 겹치는지 확인
+        /// </summary>
+        private bool IsOverlapping(ReminderItem a, ReminderItem b)
+        {
+            // A의 시작이 B의 끝보다 작고, B의 시작이 A의 끝보다 작으면 겹침
+            return a.TimeInSeconds < b.GetEndTimeInSeconds() &&
+                   b.TimeInSeconds < a.GetEndTimeInSeconds();
+        }
+
+        /// <summary>
+        /// 현재 사용 중인 최대 Lane 번호 반환
+        /// </summary>
+        public int GetMaxLane()
+        {
+            if (_reminders.Count == 0)
+                return 0;
+
+            return _reminders.Max(r => r.Lane);
         }
 
         /// <summary>

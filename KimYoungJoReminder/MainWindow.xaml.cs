@@ -292,6 +292,34 @@ namespace KimYoungJoReminder
                 marker.DeleteRequested += (s, e) => DeleteReminder(reminderItem);
 
                 _reminderMarkers.Add(marker);
+
+                // Canvas 높이 동적 조정
+                UpdateCanvasHeight();
+            }
+        }
+
+        /// <summary>
+        /// Canvas 높이를 Lane 개수에 맞게 동적으로 조정
+        /// </summary>
+        private void UpdateCanvasHeight()
+        {
+            const double TIME_LABEL_HEIGHT = 30;
+            const double LANE_HEIGHT = 25;
+            const double BOTTOM_MARGIN = 20;
+
+            int maxLane = _timelineManager.GetMaxLane();
+            double requiredHeight = TIME_LABEL_HEIGHT + ((maxLane + 1) * LANE_HEIGHT) + BOTTOM_MARGIN;
+
+            // 최소 높이 200px 보장
+            if (requiredHeight < 200)
+                requiredHeight = 200;
+
+            timelineCanvas.Height = requiredHeight;
+
+            // Playhead 라인 높이도 업데이트
+            if (_playheadLine != null)
+            {
+                _playheadLine.Y2 = requiredHeight;
             }
         }
 
@@ -309,6 +337,9 @@ namespace KimYoungJoReminder
                 {
                     marker.Remove();
                     _reminderMarkers.Remove(marker);
+
+                    // Canvas 높이 재조정
+                    UpdateCanvasHeight();
                 }
             }
         }

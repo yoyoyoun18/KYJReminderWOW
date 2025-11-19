@@ -27,12 +27,18 @@ namespace KimYoungJoReminder.Models
         /// </summary>
         public bool HasTriggered { get; set; }
 
+        /// <summary>
+        /// 타임라인에서 배치될 레인 (행) 번호 (0부터 시작)
+        /// </summary>
+        public int Lane { get; set; }
+
         public ReminderItem(int timeInSeconds, string text, int duration = 1)
         {
             TimeInSeconds = timeInSeconds;
             Text = text;
             Duration = duration;
             HasTriggered = false;
+            Lane = 0;
         }
 
         /// <summary>
