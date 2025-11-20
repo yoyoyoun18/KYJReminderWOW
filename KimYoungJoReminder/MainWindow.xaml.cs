@@ -585,6 +585,7 @@ namespace KimYoungJoReminder
         {
             // 기존 타임라인 초기화
             _timelineManager.Reset();
+            _timelineManager.ClearAllReminders();
 
             // 기존 마커 제거
             foreach (var marker in _reminderMarkers)
@@ -607,6 +608,9 @@ namespace KimYoungJoReminder
             {
                 AddReminderMarker(reminder.TimeInSeconds, reminder.Text, reminder.Duration);
             }
+
+            // Canvas 높이 재조정
+            UpdateCanvasHeight();
         }
 
         #endregion

@@ -272,6 +272,14 @@ namespace KimYoungJoReminder.Models
         }
 
         /// <summary>
+        /// 모든 리마인더 삭제
+        /// </summary>
+        public void ClearAllReminders()
+        {
+            _reminders.Clear();
+        }
+
+        /// <summary>
         /// 모든 리마인더 가져오기
         /// </summary>
         public List<ReminderItem> GetAllReminders()
