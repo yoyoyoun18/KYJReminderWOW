@@ -35,6 +35,10 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="Newtonsoft.Json, Version=13.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
+      <HintPath>..\packages\Newtonsoft.Json.13.0.1\lib\net45\Newtonsoft.Json.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Data" />
     <Reference Include="System.Xml" />
@@ -72,6 +76,8 @@
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="Components\ReminderMarker.cs" />
+    <Compile Include="Models\BossProfile.cs" />
+    <Compile Include="Models\ProfileManager.cs" />
     <Compile Include="Models\ReminderItem.cs" />
     <Compile Include="Models\TimelineManager.cs" />
     <Compile Include="Models\TimelineState.cs" />

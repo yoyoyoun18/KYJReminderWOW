@@ -37,6 +37,16 @@ namespace KimYoungJoReminder
         /// </summary>
         private List<ReminderMarker> _reminderMarkers;
 
+        /// <summary>
+        /// 프로필 관리자
+        /// </summary>
+        private ProfileManager _profileManager;
+
+        /// <summary>
+        /// 현재 선택된 Boss Profile 이름
+        /// </summary>
+        private string _currentProfile = "Boss 1";
+
         public MainWindow()
         {
             InitializeComponent();
@@ -50,6 +60,7 @@ namespace KimYoungJoReminder
         {
             _timelineManager = new TimelineManager();
             _reminderMarkers = new List<ReminderMarker>();
+            _profileManager = new ProfileManager();
 
             // TimelineManager 이벤트 구독
             _timelineManager.TimeUpdated += OnTimeUpdated;
@@ -59,6 +70,9 @@ namespace KimYoungJoReminder
             // 타임라인 초기화
             DrawTimelineGrid();
             CreatePlayhead();
+
+            // 첫 프로필 로드 (Boss 1)
+            LoadProfile(_currentProfile);
         }
 
         /// <summary>
@@ -247,6 +261,7 @@ namespace KimYoungJoReminder
                     if (_timelineManager.AddReminder(timeInSeconds, textBox.Text, duration))
                     {
                         AddReminderMarker(timeInSeconds, textBox.Text, duration);
+                        SaveCurrentProfile();  // 프로필 자동 저장
                         inputWindow.DialogResult = true;
                     }
                     else
@@ -340,6 +355,9 @@ namespace KimYoungJoReminder
 
                     // Canvas 높이 재조정
                     UpdateCanvasHeight();
+
+                    // 프로필 자동 저장
+                    SaveCurrentProfile();
                 }
             }
         }
@@ -415,6 +433,9 @@ namespace KimYoungJoReminder
                     {
                         marker.UpdateUI();
                     }
+
+                    // 프로필 자동 저장
+                    SaveCurrentProfile();
 
                     inputWindow.DialogResult = true;
                 }
@@ -527,7 +548,7 @@ namespace KimYoungJoReminder
         private void CmbBossProfile_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             // 초기화 중에는 이벤트 무시
-            if (cmbBossProfile == null || cmbBossProfile.SelectedItem == null)
+            if (cmbBossProfile == null || cmbBossProfile.SelectedItem == null || _profileManager == null)
                 return;
 
             var selectedItem = cmbBossProfile.SelectedItem as ComboBoxItem;
@@ -535,7 +556,56 @@ namespace KimYoungJoReminder
             {
                 string selectedBoss = selectedItem.Content.ToString();
 
-                // TODO: 선택된 보스에 따라 프로필 로드
+                // 동일한 프로필이면 무시
+                if (selectedBoss == _currentProfile)
+                    return;
+
+                // 현재 프로필 저장
+                SaveCurrentProfile();
+
+                // 새 프로필 로드
+                _currentProfile = selectedBoss;
+                LoadProfile(_currentProfile);
+            }
+        }
+
+        /// <summary>
+        /// 현재 프로필 저장
+        /// </summary>
+        private void SaveCurrentProfile()
+        {
+            var reminders = _timelineManager.GetAllReminders().ToList();
+            _profileManager.SaveProfile(_currentProfile, reminders);
+        }
+
+        /// <summary>
+        /// 프로필 로드
+        /// </summary>
+        private void LoadProfile(string profileName)
+        {
+            // 기존 타임라인 초기화
+            _timelineManager.Reset();
+
+            // 기존 마커 제거
+            foreach (var marker in _reminderMarkers)
+            {
+                marker.Remove();
+            }
+            _reminderMarkers.Clear();
+
+            // 프로필에서 리마인더 로드
+            var reminders = _profileManager.LoadProfile(profileName);
+
+            // TimelineManager에 리마인더 추가
+            foreach (var reminder in reminders)
+            {
+                _timelineManager.AddReminder(reminder.TimeInSeconds, reminder.Text, reminder.Duration);
+            }
+
+            // UI에 마커 표시
+            foreach (var reminder in _timelineManager.GetAllReminders())
+            {
+                AddReminderMarker(reminder.TimeInSeconds, reminder.Text, reminder.Duration);
             }
         }
 
