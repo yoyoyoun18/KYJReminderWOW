@@ -143,6 +143,7 @@ namespace KimYoungJoReminder.Models
             // Stopwatch 정지 및 누적 시간 저장
             _stopwatch.Stop();
             _pausedTimeInSeconds = CurrentTimeInSeconds;
+            _stopwatch.Reset();  // Stopwatch 초기화 (재생 시 0부터 시작)
 
             _timer.Stop();
             ChangeState(TimelineState.Paused);
