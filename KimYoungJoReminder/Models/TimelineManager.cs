@@ -42,9 +42,9 @@ namespace KimYoungJoReminder.Models
         private Stopwatch _stopwatch;
 
         /// <summary>
-        /// Pause 시점까지의 누적 시간 (초)
+        /// Pause 시점까지의 누적 시간 (초, 소수점 포함)
         /// </summary>
-        private int _pausedTimeInSeconds;
+        private double _pausedTimeInSeconds;
 
         /// <summary>
         /// 시간이 업데이트될 때 발생하는 이벤트 (UI 업데이트용)
@@ -83,7 +83,7 @@ namespace KimYoungJoReminder.Models
         private void Timer_Tick(object sender, EventArgs e)
         {
             // Stopwatch로부터 실제 경과 시간 계산 (초 단위)
-            int newTimeInSeconds = _pausedTimeInSeconds + (int)_stopwatch.Elapsed.TotalSeconds;
+            int newTimeInSeconds = (int)(_pausedTimeInSeconds + _stopwatch.Elapsed.TotalSeconds);
 
             // UI는 매 틱마다 업데이트 (소수점 표시를 위해)
             TimeUpdated?.Invoke(this, newTimeInSeconds);
@@ -140,9 +140,9 @@ namespace KimYoungJoReminder.Models
             if (State != TimelineState.Playing)
                 return;
 
-            // Stopwatch 정지 및 누적 시간 저장
+            // Stopwatch 정지 및 누적 시간 저장 (소수점 포함)
             _stopwatch.Stop();
-            _pausedTimeInSeconds = CurrentTimeInSeconds;
+            _pausedTimeInSeconds = _pausedTimeInSeconds + _stopwatch.Elapsed.TotalSeconds;
             _stopwatch.Reset();  // Stopwatch 초기화 (재생 시 0부터 시작)
 
             _timer.Stop();
